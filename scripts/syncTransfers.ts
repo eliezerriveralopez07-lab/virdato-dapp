@@ -25,9 +25,12 @@ async function main() {
     transport: http(rpcUrl),
   });
 
+  // ✅ SAFER fromBlock handling – no BigInt(undefined)
+  const rawFromBlock = process.env.VIRDATO_FROM_BLOCK;
+
   const fromBlock =
-    process.env.VIRDATO_FROM_BLOCK !== undefined
-      ? BigInt(process.env.VIRDATO_FROM_BLOCK)
+    typeof rawFromBlock === "string" && rawFromBlock.length > 0
+      ? BigInt(rawFromBlock)
       : 0n;
 
   const latest = await client.getBlockNumber();
@@ -92,11 +95,15 @@ async function main() {
   console.log("Sync script finished.");
 }
 
-main()
-  .catch((err) => {
-    console.error("Sync script error:", err);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// ✅ Only run main() when this file is executed directly (npm run sync:transfers)
+// and NOT when it's imported indirectly during Next.js build/type-check.
+if (require.main === module) {
+  main()
+    .catch((err) => {
+      console.error("Sync script error:", err);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

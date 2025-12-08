@@ -1,56 +1,20 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { VIRD_TOKEN_ADDRESS } from "@/app/lib/virdToken";
+import { NextRequest, NextResponse } from 'next/server';
 
-type Params = { params: { address: string } };
+type RouteParams = {
+  address: string;
+};
 
-export async function GET(req: Request, { params }: Params) {
-  const addr = params.address.toLowerCase();
-  const token = VIRD_TOKEN_ADDRESS.toLowerCase();
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: RouteParams }
+) {
+  const { address } = params;
 
-  const address = await prisma.address.findUnique({
-    where: { address: addr },
-    include: {
-      txsFrom: {
-        where: { token },
-        orderBy: { timestamp: "desc" },
-        take: 20,
-        include: { to: true },
-      },
-      txsTo: {
-        where: { token },
-        orderBy: { timestamp: "desc" },
-        take: 20,
-        include: { from: true },
-      },
-    },
-  });
-
-  if (!address) {
-    return NextResponse.json({
-      address: addr,
-      sent: [],
-      received: [],
-    });
-  }
-
-  const sent = address.txsFrom.map((tx) => ({
-    hash: tx.hash,
-    to: tx.to.address,
-    amountRaw: tx.amountRaw,
-    timestamp: tx.timestamp,
-  }));
-
-  const received = address.txsTo.map((tx) => ({
-    hash: tx.hash,
-    from: tx.from.address,
-    amountRaw: tx.amountRaw,
-    timestamp: tx.timestamp,
-  }));
+  // TODO: replace this with your real logic
+  // e.g. const data = await getAnalyticsForAddress(address);
 
   return NextResponse.json({
-    address: address.address,
-    sent,
-    received,
+    address,
+    message: 'Analytics endpoint is wired correctly.',
   });
 }
