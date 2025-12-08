@@ -127,9 +127,7 @@ export default function Home() {
                   objectFit: "cover",
                   objectPosition: "center",
                   position: "absolute",
-                  // vertical stays the same
                   top: "-40%",
-                  // move the image RIGHT inside the circle
                   left: "0%",
                   display: "block",
                 }}
@@ -150,7 +148,12 @@ export default function Home() {
           <button
             onClick={() => {
               if (!mounted) return;
-              isConnected ? disconnect() : connect({ connector: injected });
+
+              if (isConnected) {
+                disconnect();
+              } else if (injected) {
+                connect({ connector: injected });
+              }
             }}
             disabled={connectButtonDisabled}
             style={{
@@ -173,7 +176,7 @@ export default function Home() {
           <p style={{ color: "#94a3b8" }}>Loading wallet...</p>
         ) : !isConnected ? (
           <p style={{ color: "#94a3b8" }}>
-            Connect your wallet to view & send Virdato Tokens.
+            Connect your wallet to view &amp; send Virdato Tokens.
           </p>
         ) : (
           <div style={{ display: "grid", gap: "20px" }}>
