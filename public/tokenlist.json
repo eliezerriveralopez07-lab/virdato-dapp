@@ -6,7 +6,7 @@
     "minor": 0,
     "patch": 0
   },
-  "logoURI": "https://raw.githubusercontent.com/eliezerriveralopez07-lab/virdato-dapp/main/assets/virdato_icon_256.png",
+  "logoURI": "https://www.virdato.com/virdato_icon_256.png",
   "keywords": [
     "virdato",
     "vird",
@@ -21,7 +21,7 @@
       "name": "Virdato",
       "symbol": "VIRD",
       "decimals": 18,
-      "logoURI": "https://raw.githubusercontent.com/eliezerriveralopez07-lab/virdato-dapp/main/assets/virdato_icon_256.png"
+      "logoURI": "https://www.virdato.com/virdato_icon_256.png"
     }
   ]
 }
