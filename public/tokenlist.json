@@ -1,0 +1,27 @@
+{
+  "name": "Virdato Token List",
+  "timestamp": "2026-03-16T00:00:00Z",
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "logoURI": "https://raw.githubusercontent.com/eliezerriveralopez07-lab/virdato-dapp/main/assets/virdato_icon_256.png",
+  "keywords": [
+    "virdato",
+    "vird",
+    "rewards",
+    "utility",
+    "base"
+  ],
+  "tokens": [
+    {
+      "chainId": 8453,
+      "address": "0xAEAc353180809F99437c4F9F23aE9204cA6A123B",
+      "name": "Virdato",
+      "symbol": "VIRD",
+      "decimals": 18,
+      "logoURI": "https://raw.githubusercontent.com/eliezerriveralopez07-lab/virdato-dapp/main/assets/virdato_icon_256.png"
+    }
+  ]
+}
