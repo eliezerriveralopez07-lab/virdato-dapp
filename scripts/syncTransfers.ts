@@ -1,109 +1,21 @@
-// scripts/syncTransfers.ts
 import "dotenv/config";
-import { createPublicClient, http, parseAbiItem } from "viem";
-import { polygonAmoy } from "viem/chains";
-import { prisma } from "../src/app/lib/prisma";
-import { VIRD_TOKEN_ADDRESS } from "../src/app/lib/virdToken";
-
-const TRANSFER_EVENT = parseAbiItem(
-  "event Transfer(address indexed from, address indexed to, uint256 value)"
-);
+import { createPublicClient, http } from "viem";
+import { base } from "viem/chains";
 
 async function main() {
-  console.log("Sync script started...");
-
-  const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL;
-  if (!rpcUrl) {
-    throw new Error("Missing NEXT_PUBLIC_ALCHEMY_RPC_URL in .env");
-  }
-
-  console.log("RPC URL =", rpcUrl);
-  console.log("Token =", VIRD_TOKEN_ADDRESS);
+  const rpcUrl = process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org";
 
   const client = createPublicClient({
-    chain: polygonAmoy,
+    chain: base,
     transport: http(rpcUrl),
   });
 
-  // ✅ SAFER fromBlock handling – no BigInt(undefined)
-  const rawFromBlock = process.env.VIRDATO_FROM_BLOCK;
+  const blockNumber = await client.getBlockNumber();
 
-  const fromBlock =
-    typeof rawFromBlock === "string" && rawFromBlock.length > 0
-      ? BigInt(rawFromBlock)
-      : 0n;
-
-  const latest = await client.getBlockNumber();
-
-  console.log(
-    `Syncing Transfer logs for ${VIRD_TOKEN_ADDRESS} from block ${fromBlock} to ${latest}...`
-  );
-
-  const logs = await client.getLogs({
-    address: VIRD_TOKEN_ADDRESS,
-    event: TRANSFER_EVENT,
-    fromBlock,
-    toBlock: latest,
-  });
-
-  console.log(`Found ${logs.length} Transfer events`);
-
-  for (const log of logs) {
-    const { args, transactionHash, blockNumber } = log;
-    if (!args) continue;
-
-    const { from, to, value } = args as {
-      from: `0x${string}`;
-      to: `0x${string}`;
-      value: bigint;
-    };
-
-    const amountRaw = value.toString();
-    const token = VIRD_TOKEN_ADDRESS.toLowerCase();
-
-    const [fromAddr, toAddr] = await Promise.all([
-      prisma.address.upsert({
-        where: { address: from.toLowerCase() },
-        update: {},
-        create: { address: from.toLowerCase() },
-      }),
-      prisma.address.upsert({
-        where: { address: to.toLowerCase() },
-        update: {},
-        create: { address: to.toLowerCase() },
-      }),
-    ]);
-
-    const block = await client.getBlock({ blockNumber });
-    const timestamp = new Date(Number(block.timestamp) * 1000);
-
-    await prisma.transaction.upsert({
-      where: { hash: transactionHash },
-      update: {},
-      create: {
-        hash: transactionHash,
-        blockNumber: Number(blockNumber),
-        timestamp,
-        amountRaw,
-        token,
-        fromId: fromAddr.id,
-        toId: toAddr.id,
-      },
-    });
-  }
-
-  console.log("Sync script finished.");
+  console.log("Base latest block:", blockNumber.toString());
 }
 
-// ✅ Only run main() when this file is executed directly (npm run sync:transfers)
-// and NOT when it's imported indirectly during Next.js build/type-check.
-if (require.main === module) {
-  main()
-    .catch((err) => {
-      console.error("Sync script error:", err);
-      process.exit(1);
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
-    });
-}
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

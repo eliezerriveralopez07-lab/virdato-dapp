@@ -1,0 +1,14 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Do NOT block production builds on TypeScript errors.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
+  // Do NOT block production builds on ESLint errors.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+};
+
+module.exports = nextConfig;

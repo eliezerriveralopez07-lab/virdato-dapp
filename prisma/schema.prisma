@@ -1,30 +1,184 @@
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider = "prisma-client-js"
 }
 
-model Address {
-  id        Int           @id @default(autoincrement())
-  address   String        @unique
-  createdAt DateTime      @default(now())
-  txsFrom   Transaction[] @relation("fromAddress")
-  txsTo     Transaction[] @relation("toAddress")
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model Transaction {
-  id          Int      @id @default(autoincrement())
-  hash        String   @unique
-  blockNumber Int
-  timestamp   DateTime
-  from        Address  @relation("fromAddress", fields: [fromId], references: [id])
-  fromId      Int
-  to          Address  @relation("toAddress", fields: [toId], references: [id])
-  toId        Int
-  amountRaw   String
-  token       String
-  createdAt   DateTime @default(now())
+enum EpochStatus {
+  DRAFT
+  SNAPSHOT_BUILT
+  FUNDED
+  FINALIZED
+  CLAIMS_OPEN
+  CLOSED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum EligibilityDecision {
+  APPROVE
+  REVIEW
+  REJECT
+}
+
+model UserAccount {
+  id                  String              @id @default(cuid())
+  wallet              String              @unique
+  youtubeChannelId    String?             @unique
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  authenticityScore   Int                 @default(0)
+  eligibilityDecision EligibilityDecision @default(REVIEW)
+  lastRiskScanAt      DateTime?
+  riskScore           Int                 @default(0)
+  verificationReason  String?
+  verificationStatus  VerificationStatus  @default(UNVERIFIED)
+
+  analytics  AnalyticsAggregate[]
+  claims     EpochClaim[]
+  riskEvents RiskEvent[]
+}
+
+model AnalyticsAggregate {
+  id                  String              @id @default(cuid())
+  wallet              String
+  source              String
+  periodStart         DateTime
+  periodEnd           DateTime
+  views               BigInt              @default(0)
+  likes               BigInt              @default(0)
+  comments            BigInt              @default(0)
+  shares              BigInt              @default(0)
+  clicks              BigInt              @default(0)
+  reposts             BigInt              @default(0)
+  impressions         BigInt              @default(0)
+  createdAt           DateTime            @default(now())
+  aiLikelihoodScore   Int                 @default(0)
+  anomalyScore        Int                 @default(0)
+  authenticityScore   Int                 @default(0)
+  eligibilityDecision EligibilityDecision @default(REVIEW)
+  engagementQuality   Int                 @default(0)
+  notes               String?
+  userAccountId       String?
+
+  userAccount UserAccount? @relation(fields: [userAccountId], references: [id])
+
+  @@index([wallet, periodStart, periodEnd])
+}
+
+model Epoch {
+  id                   String      @id @default(cuid())
+  epochNumber          Int         @unique
+  periodStart          DateTime
+  periodEnd            DateTime
+  status               EpochStatus @default(DRAFT)
+  merkleRoot           String?
+  totalEligibleWallets Int         @default(0)
+  totalGrossWei        String      @default("0")
+  totalCappedWei       String      @default("0")
+  totalFundedWei       String      @default("0")
+  totalClaimedWei      String      @default("0")
+  fundingTxHash        String?
+  finalizeTxHash       String?
+  finalizedAt          DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  claims EpochClaim[]
+}
+
+model EpochClaim {
+  id                  String              @id @default(cuid())
+  epochId             String
+  wallet              String
+  rawScore            String
+  tier                String
+  baseRewardWei       String
+  variableRewardWei   String
+  grossRewardWei      String
+  cappedRewardWei     String
+  proof               Json
+  claimed             Boolean             @default(false)
+  claimTxHash         String?
+  claimedAt           DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  authenticityScore   Int                 @default(0)
+  eligibilityDecision EligibilityDecision @default(REVIEW)
+  reviewReason        String?
+  riskScore           Int                 @default(0)
+  userAccountId       String?
+
+  epoch       Epoch        @relation(fields: [epochId], references: [id], onDelete: Cascade)
+  userAccount UserAccount? @relation(fields: [userAccountId], references: [id])
+
+  @@unique([epochId, wallet])
+  @@index([wallet])
+}
+
+model RiskEvent {
+  id            String   @id @default(cuid())
+  wallet        String
+  eventType     String
+  severity      Int      @default(0)
+  scoreImpact   Int      @default(0)
+  reason        String
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  userAccountId String?
+
+  userAccount UserAccount? @relation(fields: [userAccountId], references: [id])
+
+  @@index([wallet, createdAt])
+}
+
+model ConnectedAccount {
+  id                String  @id @default(cuid())
+  userId            String
+  platform          String
+  platformAccountId String
+  username          String?
+  displayName       String?
+
+  accessToken  String?
+  refreshToken String?
+  tokenType    String?
+  scope        String?
+  expiresAt    DateTime?
+
+  isActive     Boolean @default(true)
+  metadataJson Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([platform, platformAccountId])
+  @@index([userId, platform])
+  @@index([platform, username])
+}
+model ConnectedAccount {
+  id             String   @id @default(cuid())
+  platform       String
+  platformId     String
+  username       String?
+  displayName    String?
+  accessToken    String?
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  scopes         String?
+  metadataJson   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([platform, platformId])
+  @@index([platform])
 }
