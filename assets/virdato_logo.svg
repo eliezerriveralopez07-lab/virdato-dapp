@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256">
+  <defs>
+    <image id="img" href="https://raw.githubusercontent.com/eliezerriveralopez07-lab/virdato-dapp/main/assets/virdato_icon_256.png"/>
+  </defs>
+  <use href="#img" width="256" height="256" transform="scale(1)"/>
+</svg>
